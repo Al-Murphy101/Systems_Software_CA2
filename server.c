@@ -203,7 +203,7 @@ void *connection_handler(void *socket_desc) {
 		
 	
 		//receive file from client
-		char fr_path[200] = "/home/alex/Desktop/ca2/server_upload_files/";
+		char fr_path[200] = "/workspaces/Systems_Software_CA2/server_upload_files/distribution";
 	       	strcat( fr_path, destination);
 		strcat( fr_path, "/");
 		printf("File read path is %s\n", fr_path);

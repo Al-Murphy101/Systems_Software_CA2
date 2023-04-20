@@ -5,8 +5,10 @@ all: $(objects)
 
 
 client: client.c
-	$(CC) -o client client.c -g
+	$(CC) -o client client.c 
 
 
 server: server.c
-	$(CC) server.c -o server -lpthread -g
+	$(CC) server.c -o server -lpthread 
+
+	

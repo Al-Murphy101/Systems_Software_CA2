@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
 	struct sockaddr_in server;
 	char clientMessage[500];
 	char serverMessage[500];	
-	//char *filename = "index.html";
+	// char *filename = "report2.xml";
 	char *filename = argv[1];
 	printf("File name passed from argument: %s\n", filename);
 	char *destination = argv[2]; 
@@ -84,11 +84,11 @@ int main(int argc, char *argv[]) {
 
 
 	 
-	if( recv(SID, serverMessage, strlen("destinationReceived"), 0) < 0)
-	{
-		printf("recv() error\n");
-		return 1;
-	}
+	// if( recv(SID, serverMessage, strlen("destinationReceived"), 0) != 0)
+	// {
+	// 	printf("recv() error\n");
+	// 	return 1;
+	// }
 
 
 
@@ -130,12 +130,12 @@ int main(int argc, char *argv[]) {
 		printf("IO error\n");
 	}
 
-	printf("Server sent %s of length %d\n", serverMessage, strlen(serverMessage) );
+	printf("Server sent %s of length %ld\n", serverMessage, strlen(serverMessage) );
 
 	if( strcmp(serverMessage, "begin") == 0 ) {
 		printf("sending file %s\n", filename);
 
-		char *fs_path = "/home/alex/Desktop/ca2/client_files/";
+		char *fs_path = "/workspaces/Systems_Software_CA2/client_files/manufacturing";
 		char *fs_name = (char * ) malloc( 1 + strlen(fs_path) + strlen(filename) );
 		strcpy(fs_name, fs_path);
 		strcat(fs_name, filename);
