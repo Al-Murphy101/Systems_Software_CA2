@@ -18,7 +18,7 @@
 pthread_mutex_t lock;
 
 void *connection_handler(void *);
-
+void send_display_error(char* err, char* data, int cs);
 int main() { 
 	int socket_desc;
 	int client_sock;
@@ -100,7 +100,18 @@ void *connection_handler(void *socket_desc) {
 	int READSIZE;
 	uid_t client_usr_id;
 	char destination[20];
-	
+	char username[1024];
+
+	READSIZE = recv(sock, username, sizeof(username), 0);
+	if(READSIZE == 0) {
+		puts("Client disconnected");
+		fflush(stdout);
+	} else if (READSIZE == -1) {
+		send_display_error("Error reading username", "Failed to retrieve username", sock);
+	}
+
+	printf("Read username : %s", username);
+
 	//1. receive the group id from the client	
 	READSIZE = recv(sock, &client_usr_id, sizeof(client_usr_id), 0);
 
@@ -281,6 +292,10 @@ void *connection_handler(void *socket_desc) {
 	return 0;
 }
 
-
+void send_display_error(char* err, char* data, int cs) {
+	perror(err);
+	write(cs, data, strlen(data));
+	close(cs);
+}
 
 

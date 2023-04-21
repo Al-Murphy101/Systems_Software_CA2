@@ -6,8 +6,15 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
+#include <pwd.h>
 
 #define LENGTH 512
+
+void send_username();
+void send_data();
+
+char client_message[1024];
+int SID;
 
 int main(int argc, char *argv[]) { 
 
@@ -20,7 +27,7 @@ int main(int argc, char *argv[]) {
 	} 
 
 	
-	int SID;
+	
 	struct sockaddr_in server;
 	char clientMessage[500];
 	char serverMessage[500];	
@@ -61,11 +68,16 @@ int main(int argc, char *argv[]) {
 
 	printf("Connected to the server ok\n");
 
+
+	send_username();
 	
 	//get the id of the user 
 	uid_t usr_id = getuid();
+
+
+
 	uid_t converted_usr_id = htonl(usr_id);
-	printf("sending id of the user to the server\n");
+	printf("sending id %d of the user to the server\n", converted_usr_id);
 
 
 	//send the id of the user to the server
@@ -168,5 +180,27 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
+void send_username() {
+	struct passwd* pw;
 
+	if ((pw = getpwuid(getuid()))==NULL) {
+		puts("Error: Could not retrieve the username");
+		exit;
+	}
+
+	char* user_name = pw->pw_name;
+	send_data(user_name);
+}
+
+void send_data(char* data) {
+	bzero(client_message, 1024);
+	strcpy(client_message, data);
+
+	if (send(SID, client_message, sizeof(client_message), 0) == -1) {
+		printf("Error sending message to the server\n");
+		exit(-1);
+	}
+
+	return;
+}
 
