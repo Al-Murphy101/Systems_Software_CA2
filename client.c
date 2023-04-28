@@ -6,37 +6,28 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
-#include <pwd.h>
 
 #define LENGTH 512
 
-void send_username();
-void send_data();
-
-char client_message[1024];
-int SID;
-
 int main(int argc, char *argv[]) { 
 
-	//expect 2 arguments, 
-	//first arg - program name 
-	//seconds arg - file to be transferred
+	//2 arguments - filename and destination
+	
 	if(argc != 3) {
 		printf("Invalid number of arguments, usage: ./client <file-name> <destination>\n");
 		exit(1);
 	} 
 
 	
-	
+	int SID;
 	struct sockaddr_in server;
 	char clientMessage[500];
 	char serverMessage[500];	
-	// char *filename = "report2.xml";
 	char *filename = argv[1];
 	printf("File name passed from argument: %s\n", filename);
 	char *destination = argv[2]; 
 
-	//if the user did not enter manufacturing or distribution in argv[2]
+	//error checking
 	if( !(strcmp(destination, "manufacturing") == 0 
 			||
 		strcmp(destination, "distribution") == 0 ) 
@@ -46,7 +37,7 @@ int main(int argc, char *argv[]) {
 		}
 
 
-	//create socket
+	//create the socket
 	SID = socket(AF_INET, SOCK_STREAM, 0);
 
 	if(SID == -1) { 
@@ -68,19 +59,14 @@ int main(int argc, char *argv[]) {
 
 	printf("Connected to the server ok\n");
 
-
-	send_username();
 	
-	//get the id of the user 
+	//get user id 
 	uid_t usr_id = getuid();
-
-
-
 	uid_t converted_usr_id = htonl(usr_id);
-	printf("sending id %d of the user to the server\n", converted_usr_id);
+	printf("sending id of the user to the server\n");
 
 
-	//send the id of the user to the server
+	//send user id to the server
 	if( write(SID, &converted_usr_id, sizeof(converted_usr_id)) < 0) {
 		printf("send failed");
 	     	return 1;	
@@ -96,15 +82,14 @@ int main(int argc, char *argv[]) {
 
 
 	 
-	// if( recv(SID, serverMessage, strlen("destinationReceived"), 0) != 0)
-	// {
-	// 	printf("recv() error\n");
-	// 	return 1;
-	// }
+	if( recv(SID, serverMessage, strlen("destinationReceived"), 0) < 0)
+	{
+		printf("recv() error\n");
+		return 1;
+	}
 
 
-
-	//send init transfer message to the server
+	//send transfer message to the server
 	if( send(SID, "initTransfer", strlen("initTransfer"), 0) < 0)
 	{
 		printf("send failed\n");
@@ -124,7 +109,7 @@ int main(int argc, char *argv[]) {
 	printf("server sent %s\n", serverMessage);	
 
 
-	//send file name to the server	
+	//send name of file to server	
 	if(strcmp(serverMessage, "filename") == 0 ) { 
 		printf("Sending file %s\n", filename);
 		
@@ -137,7 +122,7 @@ int main(int argc, char *argv[]) {
 
 	memset(serverMessage, 0, 500);
 	
-	//receive reply from the server
+	//server error message
 	if( recv(SID, serverMessage, 500, 0) < 0) { 
 		printf("IO error\n");
 	}
@@ -147,7 +132,7 @@ int main(int argc, char *argv[]) {
 	if( strcmp(serverMessage, "begin") == 0 ) {
 		printf("sending file %s\n", filename);
 
-		char *fs_path = "/workspaces/Systems_Software_CA2/client_files/manufacturing";
+		char *fs_path = "/workspaces/Systems_Software_CA2/distribution/";
 		char *fs_name = (char * ) malloc( 1 + strlen(fs_path) + strlen(filename) );
 		strcpy(fs_name, fs_path);
 		strcat(fs_name, filename);
@@ -180,27 +165,4 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-void send_username() {
-	struct passwd* pw;
-
-	if ((pw = getpwuid(getuid()))==NULL) {
-		puts("Error: Could not retrieve the username");
-		exit;
-	}
-
-	char* user_name = pw->pw_name;
-	send_data(user_name);
-}
-
-void send_data(char* data) {
-	bzero(client_message, 1024);
-	strcpy(client_message, data);
-
-	if (send(SID, client_message, sizeof(client_message), 0) == -1) {
-		printf("Error sending message to the server\n");
-		exit(-1);
-	}
-
-	return;
-}
 

@@ -18,7 +18,7 @@
 pthread_mutex_t lock;
 
 void *connection_handler(void *);
-void send_display_error(char* err, char* data, int cs);
+
 int main() { 
 	int socket_desc;
 	int client_sock;
@@ -38,14 +38,14 @@ int main() {
 		printf("Socket successfully created!!\n");
 	}
 
-	//set sockaddr_in variables
+	//set sockaddr_in 
 	server.sin_port = htons(8801);
 	server.sin_family = AF_INET;
 	server.sin_addr.s_addr = INADDR_ANY;
 
 
 
-	//bind
+	//bind socket
 	if(bind(socket_desc, (struct sockaddr *) &server, sizeof(server)) < 0 ) {
 		perror("Bind issue\n");	
 		return 1;
@@ -53,18 +53,17 @@ int main() {
 		printf("bind complete\n");
 	}
 	
-	//listen for a connection
+	//listen for connection
 	listen(socket_desc, 3);
 
-	//accept any incoming connection
+	//accept incoming connections
 	printf("Waiting for incoming connection from client\n");
 	conSize = sizeof(struct sockaddr_in);
 	
 	//pthread_t tid;
-
 	int thread_count = 0;
 
-	//initialze mutex lock 
+	//mutex lock 
 	pthread_mutex_init(&lock, NULL);
 
 	while( (client_sock = accept(socket_desc, (struct sockaddr *) &client, (socklen_t *) &conSize )))
@@ -100,19 +99,8 @@ void *connection_handler(void *socket_desc) {
 	int READSIZE;
 	uid_t client_usr_id;
 	char destination[20];
-	char username[1024];
-
-	READSIZE = recv(sock, username, sizeof(username), 0);
-	if(READSIZE == 0) {
-		puts("Client disconnected");
-		fflush(stdout);
-	} else if (READSIZE == -1) {
-		send_display_error("Error reading username", "Failed to retrieve username", sock);
-	}
-
-	printf("Read username : %s", username);
-
-	//1. receive the group id from the client	
+	
+	//receive the group id from the client	
 	READSIZE = recv(sock, &client_usr_id, sizeof(client_usr_id), 0);
 
 	if(READSIZE == -1) { 
@@ -125,7 +113,7 @@ void *connection_handler(void *socket_desc) {
 
 	printf("\nlocking the thread...\n");
 
-	//********lock the thread until the file transfer completes and id is reset
+	//lock the thread until the file transfer completes and id is reset
 	pthread_mutex_lock(&lock);
 
 
@@ -137,7 +125,7 @@ void *connection_handler(void *socket_desc) {
 	pw = getpwuid(client_usr_id);
 	struct group *gr;
 
-	//get the name for the user id 
+	//get the user id and name 
 	char *user_name = pw -> pw_name;
 
 	ngroups = 10;
@@ -167,12 +155,9 @@ void *connection_handler(void *socket_desc) {
 	printf("\neffective user id: %d\n", geteuid());
 
 
-
-
-
 	memset(msg, 0, 500);
 	
-	// 2. receive the destination path from the client
+	
 	//read the destination path
 	READSIZE = recv(sock, msg, 500, 0);
 	
@@ -186,11 +171,9 @@ void *connection_handler(void *socket_desc) {
 	}
 
 
-
-
 	memset(msg, 0, 500);
 	
-	//read message from the client
+	//read message from client
 	READSIZE = recv(sock, msg, 500, 0);
 
 
@@ -206,7 +189,7 @@ void *connection_handler(void *socket_desc) {
 	READSIZE = recv(sock, msg, 500, 0);
 	
 
-	//if not initTransfer then expect from the client the name of the file
+	//if not initTransfer 
 	if( strcmp(msg, "initTransfer") != 0 && strlen(msg) > 0) { 
 		printf("File\n");
 		write( sock, "begin", strlen("begin") );
@@ -214,9 +197,9 @@ void *connection_handler(void *socket_desc) {
 		
 	
 		//receive file from client
-		char fr_path[200] = "/workspaces/Systems_Software_CA2/server_upload_files/distribution";
-	       	strcat( fr_path, destination);
-		strcat( fr_path, "/");
+		char fr_path[200] = "/workspaces/Systems_Software_CA2/manufacturing/";
+	       	// strcat( fr_path, destination);
+		// strcat( fr_path, "/");
 		printf("File read path is %s\n", fr_path);
 
 		char revbuf[LENGTH];
@@ -259,7 +242,7 @@ void *connection_handler(void *socket_desc) {
 		printf("Ok received from the client\n");
 		fclose(fr);
 
-		//change effective user id back to root
+		//change user id back to root
 		seteuid(0);
 
 		printf("\neffective id has been reset\n");	
@@ -291,11 +274,3 @@ void *connection_handler(void *socket_desc) {
 
 	return 0;
 }
-
-void send_display_error(char* err, char* data, int cs) {
-	perror(err);
-	write(cs, data, strlen(data));
-	close(cs);
-}
-
-
